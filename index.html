@@ -190,13 +190,17 @@
                     </span>
                 </h2>
                 <div class="flex gap-2">
-                    <button id="clearClinicalBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold text-sm flex items-center transition-all duration-200 shadow hover:shadow-lg">
-                        <i class="fas fa-trash mr-2"></i>
+                    <button id="clearClinicalBtn" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg font-semibold text-sm flex items-center transition-all duration-200 shadow hover:shadow-lg">
+                        <i class="fas fa-trash mr-1"></i>
                         전체 삭제
                     </button>
-                    <button id="resetClinicalBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold text-sm flex items-center transition-all duration-200 shadow hover:shadow-lg">
-                        <i class="fas fa-redo mr-2"></i>
-                        템플릿
+                    <button id="simpleTemplateBtn" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-lg font-semibold text-sm flex items-center transition-all duration-200 shadow hover:shadow-lg">
+                        <i class="fas fa-minus-circle mr-1"></i>
+                        간단
+                    </button>
+                    <button id="resetClinicalBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg font-semibold text-sm flex items-center transition-all duration-200 shadow hover:shadow-lg">
+                        <i class="fas fa-redo mr-1"></i>
+                        전체
                     </button>
                 </div>
             </div>
@@ -204,12 +208,11 @@
                 id="clinicalInfo" 
                 class="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:outline-none resize-vertical font-mono text-sm"
                 rows="8"
-># Radiology Clinical Information Template #
+># Radiology Clinical Information #
 
 ___-year-old female/male patient with chief complaint of ___ (duration: ___).
 
-# Additional Context (optional) #
-                
+# Additional Information #
 Examination name: ___ 
 Suspected disease/condition: ___ 
 Past medical history: ___ 
@@ -303,6 +306,7 @@ Current treatment or intervention: ___</textarea>
                 this.downloadBtn = document.getElementById('downloadBtn');
                 this.clearClinicalBtn = document.getElementById('clearClinicalBtn');
                 this.resetClinicalBtn = document.getElementById('resetClinicalBtn');
+                this.simpleTemplateBtn = document.getElementById('simpleTemplateBtn');
                 
                 this.statusText = document.getElementById('statusText');
                 this.connectionStatus = document.getElementById('connectionStatus');
@@ -332,6 +336,7 @@ Current treatment or intervention: ___</textarea>
                 this.downloadBtn.addEventListener('click', () => this.downloadReport());
                 this.clearClinicalBtn.addEventListener('click', () => this.clearClinicalInfo());
                 this.resetClinicalBtn.addEventListener('click', () => this.resetClinicalInfo());
+                this.simpleTemplateBtn.addEventListener('click', () => this.setSimpleTemplate());
                 
                 this.settingsToggle.addEventListener('click', () => this.toggleSettings());
 
@@ -386,11 +391,19 @@ Current treatment or intervention: ___</textarea>
             }
 
             getDefaultClinicalTemplate() {
-                return '# Radiology Clinical Information Template #\n\n[Age]-year-old [female/male] patient with [chief complaint of ___] (duration: ___).\n\nAdditional Context (optional):\nExamination name: ___ \nSuspected disease/condition: ___ \nPast medical history: ___ \nRelevant laboratory findings: ___ \nPrevious imaging findings: ___ \nCurrent treatment or intervention: ___';
+                return '# Radiology Clinical Information #\n\n___-year-old female/male patient with chief complaint of ___ (duration: ___).\n\n # Additional Information # \nExamination name: ___ \nSuspected disease/condition: ___ \nPast medical history: ___ \nRelevant laboratory findings: ___ \nPrevious imaging findings: ___ \nCurrent treatment or intervention: ___';
+            }
+
+            getSimpleClinicalTemplate() {
+                return '# Radiology Clinical Information #\n\n___-year-old female/male patient with chief complaint of ___ (duration: ___).';
             }
 
             clearClinicalInfo() {
                 this.clinicalInfo.value = '';
+            }
+
+            setSimpleTemplate() {
+                this.clinicalInfo.value = this.getSimpleClinicalTemplate();
             }
 
             resetClinicalInfo() {
