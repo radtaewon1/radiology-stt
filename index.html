@@ -55,6 +55,32 @@
         .settings-panel.active {
             max-height: 2000px;
         }
+
+        .editable-textarea {
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            resize: vertical;
+        }
+
+        .editable-textarea:focus {
+            outline: none;
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .conclusion-textarea {
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            resize: vertical;
+        }
+
+        .conclusion-textarea:focus {
+            outline: none;
+            border-color: #9333EA;
+            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+        }
     </style>
 </head>
 <body class="gradient-bg min-h-screen">
@@ -157,56 +183,64 @@
         <div class="medical-card rounded-xl shadow-2xl p-6 mb-8">
             <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
                 <i class="fas fa-notes-medical mr-3 text-green-600"></i>
-                Clinical Information (선택사항)
+                Clinical Information
+                <span class="ml-auto text-sm font-normal text-gray-600">
+                    <i class="fas fa-edit mr-1"></i>직접 수정 가능
+                </span>
             </h2>
             <textarea 
                 id="clinicalInfo" 
                 class="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:outline-none resize-vertical font-mono text-sm"
-                rows="4"
-                placeholder="환자의 임상 정보를 입력하세요 (예: 증상, 과거력, 검사 목적 등)&#10;&#10;예시:&#10;- 45세 남자, 기침과 발열 3일째&#10;- 폐렴 의심으로 Chest CT 시행&#10;- 과거력: 당뇨, 고혈압"
-            ></textarea>
+                rows="8"
+># Radiology Clinical Information Template #
+
+[Age]-year-old [female/male] patient with [chief complaint of ___] (duration: ___).
+
+# Additional Context (optional) #
+
+Examination name: ___ 
+Suspected disease/condition: ___ 
+Past medical history: ___ 
+Relevant laboratory findings: ___ 
+Previous imaging findings: ___ 
+Current treatment or intervention: ___</textarea>
             <div class="mt-2 flex items-center text-sm text-gray-600">
                 <i class="fas fa-info-circle mr-2"></i>
-                <span>임상 정보는 결론 생성 시 함께 고려되어 더 정확한 감별진단을 제공합니다.</span>
+                <span>템플릿을 수정하여 환자의 임상 정보를 입력하세요. 결론 생성 시 함께 고려됩니다.</span>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Editable Transcription Area -->
             <div class="medical-card rounded-xl shadow-2xl p-6">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
                     <i class="fas fa-file-medical-alt mr-3 text-blue-600"></i>
                     판독문
+                    <span class="ml-auto text-sm font-normal text-gray-600">
+                        <i class="fas fa-edit mr-1"></i>직접 수정 가능
+                    </span>
                 </h2>
-                <div class="bg-gray-50 rounded-lg p-4 h-80 overflow-y-auto border-2 border-gray-200">
-                    <div id="transcriptionOutput" class="text-gray-700 text-sm whitespace-pre-wrap font-mono">
-음성을 녹음하면 자동으로 처리됩니다.
-
-사용법:
-1. 녹음 시작 버튼 클릭
-2. 판독 내용 말하기
-3. 녹음 중지 버튼 클릭
-4. 자동으로 정제된 판독문 표시
-                    </div>
-                </div>
+                <textarea
+                    id="transcriptionOutput"
+                    class="editable-textarea w-full h-80 p-4 bg-gray-50 rounded-lg border-2 border-gray-200 text-gray-700 whitespace-pre-wrap"
+                    placeholder="음성을 녹음하면 자동으로 처리됩니다.&#10;&#10;사용법:&#10;1. 녹음 시작 버튼 클릭&#10;2. 판독 내용 말하기&#10;3. 녹음 중지 버튼 클릭&#10;4. 자동으로 정제된 판독문 표시&#10;5. 필요시 직접 수정 가능"
+                ></textarea>
             </div>
 
+            <!-- Editable Conclusion Area -->
             <div class="medical-card rounded-xl shadow-2xl p-6">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
                     <i class="fas fa-stethoscope mr-3 text-purple-600"></i>
                     결론
+                    <span class="ml-auto text-sm font-normal text-gray-600">
+                        <i class="fas fa-edit mr-1"></i>직접 수정 가능
+                    </span>
                 </h2>
-                <div class="bg-purple-50 rounded-lg p-4 h-80 overflow-y-auto border-2 border-purple-200">
-                    <div id="conclusionOutput" class="text-purple-800 text-sm whitespace-pre-wrap font-mono">
-결론 생성 버튼을 클릭하면
-전문적인 결론과 감별진단이 생성됩니다.
-
-예상 형식:
-Conclusion:
-1. 주요 소견
- -- Primary diagnosis, more likely
- -- Alternative diagnosis, less likely
-                    </div>
-                </div>
+                <textarea
+                    id="conclusionOutput"
+                    class="conclusion-textarea w-full h-80 p-4 bg-purple-50 rounded-lg border-2 border-purple-200 text-purple-800 whitespace-pre-wrap"
+                    placeholder="결론 생성 버튼을 클릭하면&#10;전문적인 결론과 감별진단이 생성됩니다.&#10;&#10;예상 형식:&#10;Conclusion:&#10;1. 주요 소견&#10; -- Primary diagnosis, more likely&#10; -- Alternative diagnosis, less likely&#10;&#10;생성 후 직접 수정 가능"
+                ></textarea>
             </div>
         </div>
 
@@ -241,8 +275,6 @@ Conclusion:
                 this.isRecording = false;
                 this.mediaRecorder = null;
                 this.audioChunks = [];
-                this.transcriptionText = '';
-                this.conclusionText = '';
                 
                 this.initElements();
                 this.setupListeners();
@@ -294,6 +326,11 @@ Conclusion:
                 this.temperature.addEventListener('input', () => {
                     this.temperatureValue.textContent = this.temperature.value;
                 });
+
+                // Enable conclusion button when transcription text exists
+                this.transcriptionOutput.addEventListener('input', () => {
+                    this.conclusionBtn.disabled = !this.transcriptionOutput.value.trim();
+                });
             }
 
             initializePrompts() {
@@ -322,6 +359,14 @@ Conclusion:
 
             getClinicalInformation() {
                 return this.clinicalInfo.value.trim();
+            }
+
+            getTranscriptionText() {
+                return this.transcriptionOutput.value.trim();
+            }
+
+            getConclusionText() {
+                return this.conclusionOutput.value.trim();
             }
 
             async checkServer() {
@@ -465,21 +510,22 @@ Conclusion:
             handleTranscriptionResult(result) {
                 console.log('정제된 텍스트:', result.refinedText);
 
-                if (this.transcriptionText) {
-                    this.transcriptionText += '\n\n' + result.refinedText;
+                const currentText = this.transcriptionOutput.value.trim();
+                if (currentText) {
+                    this.transcriptionOutput.value = currentText + '\n\n' + result.refinedText;
                 } else {
-                    this.transcriptionText = result.refinedText;
+                    this.transcriptionOutput.value = result.refinedText;
                 }
 
                 if (result.conclusion) {
-                    this.conclusionText = result.conclusion;
+                    this.conclusionOutput.value = result.conclusion;
                 }
-
-                this.updateDisplay();
             }
 
             async generateConclusion() {
-                if (!this.transcriptionText) {
+                const transcriptionText = this.getTranscriptionText();
+                
+                if (!transcriptionText) {
                     alert('먼저 판독문을 작성해주세요.');
                     return;
                 }
@@ -500,7 +546,7 @@ Conclusion:
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            imagingDescription: this.transcriptionText,
+                            imagingDescription: transcriptionText,
                             clinicalInformation: clinicalInfo,
                             modelType: this.getModelType(),
                             temperature: this.temperature.value,
@@ -517,8 +563,7 @@ Conclusion:
                     
                     if (result.success) {
                         console.log('결론 생성 완료:', result.conclusion);
-                        this.conclusionText = result.conclusion;
-                        this.updateDisplay();
+                        this.conclusionOutput.value = result.conclusion;
                     } else {
                         throw new Error(result.error || 'Conclusion generation failed');
                     }
@@ -531,14 +576,6 @@ Conclusion:
                     this.updateStatus('System Ready', 'connected');
                     this.conclusionBtn.disabled = false;
                 }
-            }
-
-            updateDisplay() {
-                this.transcriptionOutput.textContent = this.transcriptionText || 
-                    '음성을 녹음하면 자동으로 처리됩니다.\n\n사용법:\n1. 녹음 시작 버튼 클릭\n2. 판독 내용 말하기\n3. 녹음 중지 버튼 클릭\n4. 자동으로 정제된 판독문 표시';
-
-                this.conclusionOutput.textContent = this.conclusionText || 
-                    '결론 생성 버튼을 클릭하면\n전문적인 결론과 감별진단이 생성됩니다.\n\n예상 형식:\nConclusion:\n1. 주요 소견\n -- Primary diagnosis, more likely\n -- Alternative diagnosis, less likely';
             }
 
             updateStatus(text, status) {
@@ -568,11 +605,10 @@ Conclusion:
 
             clearAll() {
                 if (confirm('모든 내용을 삭제하시겠습니까?')) {
-                    this.transcriptionText = '';
-                    this.conclusionText = '';
-                    this.clinicalInfo.value = '';
+                    this.transcriptionOutput.value = '';
+                    this.conclusionOutput.value = '';
+                    this.clinicalInfo.value = '# Radiology Clinical Information Template #\n\n[Age]-year-old [female/male] patient with [chief complaint of ___] (duration: ___).\n\nAdditional Context (optional):\nExamination name: ___ \nSuspected disease/condition: ___ \nPast medical history: ___ \nRelevant laboratory findings: ___ \nPrevious imaging findings: ___ \nCurrent treatment or intervention: ___';
                     this.conclusionBtn.disabled = true;
-                    this.updateDisplay();
                 }
             }
 
@@ -580,6 +616,8 @@ Conclusion:
                 const mode = this.getProcessingMode();
                 const model = this.getModelType();
                 const clinicalInfo = this.getClinicalInformation();
+                const transcriptionText = this.getTranscriptionText();
+                const conclusionText = this.getConclusionText();
                 
                 let processingInfo = '- 1단계: gpt-4o-transcribe 음성인식 및 정제\n';
                 processingInfo += '- 2단계: ' + model.toUpperCase() + ' 전문적 결론 및 감별진단';
@@ -598,8 +636,8 @@ Conclusion:
                     fullReport += 'Clinical Information:\n' + clinicalInfo + '\n\n';
                 }
                 
-                fullReport += '판독문:\n' + this.transcriptionText + '\n\n' +
-                    '결론:\n' + this.conclusionText + '\n\n' +
+                fullReport += '판독문:\n' + transcriptionText + '\n\n' +
+                    '결론:\n' + conclusionText + '\n\n' +
                     '=== AI 처리 과정 ===\n' + processingInfo;
                 
                 const blob = new Blob([fullReport], { type: 'text/plain;charset=utf-8' });
@@ -621,5 +659,4 @@ Conclusion:
         });
     </script>
 </body>
-
 </html>
