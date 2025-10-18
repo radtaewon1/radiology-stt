@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>영상의학 음성 전사 및 결론 생성AI</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .recording-pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .status-connected {
+            background: linear-gradient(45deg, #10B981, #059669);
+        }
+        
+        .status-processing {
+            background: linear-gradient(45deg, #F59E0B, #D97706);
+        }
+        
+        .status-disconnected {
+            background: linear-gradient(45deg, #EF4444, #DC2626);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .medical-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .processing-indicator {
+            display: none;
+        }
+
+        .processing-indicator.active {
+            display: inline-block;
+        }
+
+        .settings-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .settings-panel.active {
+            max-height: 2000px;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-4">
+                <i class="fas fa-microphone-alt mr-3"></i>
+                영상의학 음성 전사 및 결론 생성AI
+            </h1>
+            <p class="text-gray-200 text-lg">
+                AI 기반 판독문 작성 시스템
+            </p>
+            
+            <div class="mt-6 flex justify-center">
+                <div id="connectionStatus" class="status-connected px-6 py-3 rounded-full text-white font-semibold flex items-center">
+                    <div id="statusDot" class="w-3 h-3 rounded-full bg-white mr-3"></div>
+                    <span id="statusText">System Ready</span>
+                    <div class="processing-indicator ml-3">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="medical-card rounded-xl shadow-2xl p-6 mb-8">
+            <button id="settingsToggle" class="w-full flex items-center justify-between text-xl font-bold text-gray-800 mb-4">
+                <span><i class="fas fa-cog mr-3 text-blue-600"></i>설정</span>
+                <i class="fas fa-chevron-down transition-transform"></i>
+            </button>
+            
+            <div id="settingsPanel" class="settings-panel">
+                <!-- Processing Mode -->
+                <div class="mb-6">
+                    <label class="block text-gray-700 font-bold mb-2">결론 생성 모드</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center">
+                            <input type="radio" name="processingMode" value="2-stage" checked class="mr-2">
+                            <span>수동 결론생성</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="processingMode" value="3-stage" class="mr-2">
+                            <span>자동 결론생성</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Model Selection -->
+                <div class="mb-6">
+                    <label class="block text-gray-700 font-bold mb-2">결론 생성 모델</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center">
+                            <input type="radio" name="modelType" value="gpt4o" checked class="mr-2">
+                            <span>GPT-4o</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="modelType" value="gpt5" class="mr-2">
+                            <span>GPT-5</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- GPT-4o Options -->
+                <div id="gpt4oOptions">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-bold mb-2">Temperature: <span id="temperatureValue">0.3</span></label>
+                        <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.3" class="w-full">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>0 (결정적)</span>
+                            <span>0.5 (균형)</span>
+                            <span>1 (창의적)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GPT-5 Options -->
+                <div id="gpt5Options" style="display: none;">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-bold mb-2">Reasoning Effort</label>
+                        <select id="reasoningEffort" class="w-full p-2 border rounded">
+                            <option value="minimal">Minimal</option>
+                            <option value="low" selected>Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-bold mb-2">Verbosity</label>
+                        <select id="verbosity" class="w-full p-2 border rounded">
+                            <option value="low" selected>Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clinical Information Input -->
+        <div class="medical-card rounded-xl shadow-2xl p-6 mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-notes-medical mr-3 text-green-600"></i>
+                Clinical Information (선택사항)
+            </h2>
+            <textarea 
+                id="clinicalInfo" 
+                class="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:outline-none resize-vertical font-mono text-sm"
+                rows="4"
+                placeholder="환자의 임상 정보를 입력하세요 (예: 증상, 과거력, 검사 목적 등)&#10;&#10;예시:&#10;- 45세 남자, 기침과 발열 3일째&#10;- 폐렴 의심으로 Chest CT 시행&#10;- 과거력: 당뇨, 고혈압"
+            ></textarea>
+            <div class="mt-2 flex items-center text-sm text-gray-600">
+                <i class="fas fa-info-circle mr-2"></i>
+                <span>임상 정보는 결론 생성 시 함께 고려되어 더 정확한 감별진단을 제공합니다.</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="medical-card rounded-xl shadow-2xl p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-file-medical-alt mr-3 text-blue-600"></i>
+                    판독문
+                </h2>
+                <div class="bg-gray-50 rounded-lg p-4 h-80 overflow-y-auto border-2 border-gray-200">
+                    <div id="transcriptionOutput" class="text-gray-700 text-sm whitespace-pre-wrap font-mono">
+음성을 녹음하면 자동으로 처리됩니다.
+
+사용법:
+1. 녹음 시작 버튼 클릭
+2. 판독 내용 말하기
+3. 녹음 중지 버튼 클릭
+4. 자동으로 정제된 판독문 표시
+                    </div>
+                </div>
+            </div>
+
+            <div class="medical-card rounded-xl shadow-2xl p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-stethoscope mr-3 text-purple-600"></i>
+                    결론
+                </h2>
+                <div class="bg-purple-50 rounded-lg p-4 h-80 overflow-y-auto border-2 border-purple-200">
+                    <div id="conclusionOutput" class="text-purple-800 text-sm whitespace-pre-wrap font-mono">
+결론 생성 버튼을 클릭하면
+전문적인 결론과 감별진단이 생성됩니다.
+
+예상 형식:
+Conclusion:
+1. 주요 소견
+ -- Primary diagnosis, more likely
+ -- Alternative diagnosis, less likely
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="medical-card rounded-xl shadow-2xl p-6 mb-8">
+            <div class="flex flex-wrap justify-center gap-4">
+                <button id="recordBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full font-bold text-lg flex items-center transition-all duration-300 shadow-lg hover:shadow-xl">
+                    <i id="recordIcon" class="fas fa-microphone mr-3"></i>
+                    <span id="recordText">녹음 시작</span>
+                </button>
+
+                <button id="conclusionBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-full font-bold text-lg flex items-center transition-all duration-300 shadow-lg hover:shadow-xl" disabled>
+                    <i class="fas fa-brain mr-3"></i>
+                    결론 생성
+                </button>
+
+                <button id="clearBtn" class="bg-red-500 hover:bg-red-600 text-white px-8 py-4 rounded-full font-bold text-lg flex items-center transition-all duration-300 shadow-lg hover:shadow-xl">
+                    <i class="fas fa-trash-alt mr-3"></i>
+                    초기화
+                </button>
+
+                <button id="downloadBtn" class="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-full font-bold text-lg flex items-center transition-all duration-300 shadow-lg hover:shadow-xl">
+                    <i class="fas fa-download mr-3"></i>
+                    보고서 다운로드
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class RadiologyApp {
+            constructor() {
+                this.isRecording = false;
+                this.mediaRecorder = null;
+                this.audioChunks = [];
+                this.transcriptionText = '';
+                this.conclusionText = '';
+                
+                this.initElements();
+                this.setupListeners();
+                this.initializePrompts();
+                this.checkServer();
+            }
+
+            initElements() {
+                this.recordBtn = document.getElementById('recordBtn');
+                this.recordIcon = document.getElementById('recordIcon');
+                this.recordText = document.getElementById('recordText');
+                this.conclusionBtn = document.getElementById('conclusionBtn');
+                this.clearBtn = document.getElementById('clearBtn');
+                this.downloadBtn = document.getElementById('downloadBtn');
+                
+                this.statusText = document.getElementById('statusText');
+                this.connectionStatus = document.getElementById('connectionStatus');
+                this.processingIndicator = document.querySelector('.processing-indicator');
+                
+                this.transcriptionOutput = document.getElementById('transcriptionOutput');
+                this.conclusionOutput = document.getElementById('conclusionOutput');
+                this.clinicalInfo = document.getElementById('clinicalInfo');
+
+                this.settingsToggle = document.getElementById('settingsToggle');
+                this.settingsPanel = document.getElementById('settingsPanel');
+                this.gpt4oOptions = document.getElementById('gpt4oOptions');
+                this.gpt5Options = document.getElementById('gpt5Options');
+
+                this.processingMode = document.getElementsByName('processingMode');
+                this.modelType = document.getElementsByName('modelType');
+                this.temperature = document.getElementById('temperature');
+                this.temperatureValue = document.getElementById('temperatureValue');
+                this.reasoningEffort = document.getElementById('reasoningEffort');
+                this.verbosity = document.getElementById('verbosity');
+            }
+
+            setupListeners() {
+                this.recordBtn.addEventListener('click', () => this.toggleRecording());
+                this.conclusionBtn.addEventListener('click', () => this.generateConclusion());
+                this.clearBtn.addEventListener('click', () => this.clearAll());
+                this.downloadBtn.addEventListener('click', () => this.downloadReport());
+                
+                this.settingsToggle.addEventListener('click', () => this.toggleSettings());
+
+                this.modelType.forEach(radio => {
+                    radio.addEventListener('change', () => this.toggleModelOptions());
+                });
+
+                this.temperature.addEventListener('input', () => {
+                    this.temperatureValue.textContent = this.temperature.value;
+                });
+            }
+
+            initializePrompts() {
+                this.temperatureValue.textContent = this.temperature.value;
+            }
+
+            toggleSettings() {
+                this.settingsPanel.classList.toggle('active');
+                const icon = this.settingsToggle.querySelector('.fa-chevron-down');
+                icon.style.transform = this.settingsPanel.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0deg)';
+            }
+
+            toggleModelOptions() {
+                const isGPT5 = this.getModelType() === 'gpt5';
+                this.gpt4oOptions.style.display = isGPT5 ? 'none' : 'block';
+                this.gpt5Options.style.display = isGPT5 ? 'block' : 'none';
+            }
+
+            getProcessingMode() {
+                return Array.from(this.processingMode).find(r => r.checked).value;
+            }
+
+            getModelType() {
+                return Array.from(this.modelType).find(r => r.checked).value;
+            }
+
+            getClinicalInformation() {
+                return this.clinicalInfo.value.trim();
+            }
+
+            async checkServer() {
+                try {
+                    const response = await fetch('http://localhost:3000/health');
+                    if (response.ok) {
+                        this.updateStatus('System Ready', 'connected');
+                    } else {
+                        this.updateStatus('Server Error', 'disconnected');
+                    }
+                } catch (error) {
+                    console.error('서버 연결 실패:', error);
+                    this.updateStatus('Server Offline', 'disconnected');
+                }
+            }
+
+            async toggleRecording() {
+                if (this.isRecording) {
+                    this.stopRecording();
+                } else {
+                    await this.startRecording();
+                }
+            }
+
+            async startRecording() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: { 
+                            sampleRate: 44100,
+                            channelCount: 1,
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true
+                        } 
+                    });
+
+                    this.mediaRecorder = new MediaRecorder(stream, {
+                        mimeType: 'audio/webm;codecs=opus'
+                    });
+
+                    this.audioChunks = [];
+
+                    this.mediaRecorder.ondataavailable = (event) => {
+                        if (event.data.size > 0) {
+                            this.audioChunks.push(event.data);
+                        }
+                    };
+
+                    this.mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(this.audioChunks, { 
+                            type: 'audio/webm' 
+                        });
+                        await this.transcribeAudio(audioBlob);
+                    };
+
+                    this.mediaRecorder.start();
+                    this.isRecording = true;
+                    
+                    this.recordBtn.classList.add('recording-pulse', 'bg-red-600');
+                    this.recordBtn.classList.remove('bg-blue-600');
+                    this.recordIcon.className = 'fas fa-stop mr-3';
+                    this.recordText.textContent = '녹음 중지';
+                    
+                    this.updateStatus('녹음 중...', 'processing');
+                    
+                } catch (error) {
+                    console.error('녹음 시작 오류:', error);
+                    alert('마이크 권한을 허용해주세요.');
+                }
+            }
+
+            stopRecording() {
+                if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+                    this.mediaRecorder.stop();
+                    this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                }
+
+                this.isRecording = false;
+                
+                this.recordBtn.classList.remove('recording-pulse', 'bg-red-600');
+                this.recordBtn.classList.add('bg-blue-600');
+                this.recordIcon.className = 'fas fa-microphone mr-3';
+                this.recordText.textContent = '녹음 시작';
+                
+                this.updateStatus('AI 전사 중...', 'processing');
+                this.showProcessing(true);
+            }
+
+            async transcribeAudio(audioBlob) {
+                try {
+                    console.log('오디오 전송 중...', audioBlob.size, 'bytes');
+
+                    const formData = new FormData();
+                    formData.append('audio', audioBlob, 'recording.webm');
+                    formData.append('use3Stage', this.getProcessingMode() === '3-stage');
+                    
+                    if (this.getProcessingMode() === '3-stage') {
+                        formData.append('modelType', this.getModelType());
+                        formData.append('temperature', this.temperature.value);
+                        formData.append('reasoningEffort', this.reasoningEffort.value);
+                        formData.append('verbosity', this.verbosity.value);
+                        
+                        const clinicalInfo = this.getClinicalInformation();
+                        if (clinicalInfo) {
+                            formData.append('clinicalInformation', clinicalInfo);
+                        }
+                    }
+
+                    const response = await fetch('http://localhost:3000/transcribe', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('HTTP error! status: ' + response.status);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        console.log('전사 성공:', result.refinedText);
+                        this.handleTranscriptionResult(result);
+                        
+                        if (this.getProcessingMode() === '2-stage') {
+                            this.conclusionBtn.disabled = false;
+                        }
+                    } else {
+                        throw new Error(result.error || 'Transcription failed');
+                    }
+
+                } catch (error) {
+                    console.error('전사 오류:', error);
+                    this.updateStatus('처리 오류', 'disconnected');
+                    alert('음성 전사 중 오류가 발생했습니다: ' + error.message);
+                } finally {
+                    this.showProcessing(false);
+                    this.updateStatus('System Ready', 'connected');
+                }
+            }
+
+            handleTranscriptionResult(result) {
+                console.log('정제된 텍스트:', result.refinedText);
+
+                if (this.transcriptionText) {
+                    this.transcriptionText += '\n\n' + result.refinedText;
+                } else {
+                    this.transcriptionText = result.refinedText;
+                }
+
+                if (result.conclusion) {
+                    this.conclusionText = result.conclusion;
+                }
+
+                this.updateDisplay();
+            }
+
+            async generateConclusion() {
+                if (!this.transcriptionText) {
+                    alert('먼저 판독문을 작성해주세요.');
+                    return;
+                }
+
+                try {
+                    this.updateStatus('결론 생성 중...', 'processing');
+                    this.showProcessing(true);
+                    this.conclusionBtn.disabled = true;
+
+                    console.log('결론 생성 중...');
+
+                    const clinicalInfo = this.getClinicalInformation();
+                    console.log('Clinical Information:', clinicalInfo || '(없음)');
+
+                    const response = await fetch('http://localhost:3000/generate-conclusion', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            imagingDescription: this.transcriptionText,
+                            clinicalInformation: clinicalInfo,
+                            modelType: this.getModelType(),
+                            temperature: this.temperature.value,
+                            reasoningEffort: this.reasoningEffort.value,
+                            verbosity: this.verbosity.value
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('HTTP error! status: ' + response.status);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        console.log('결론 생성 완료:', result.conclusion);
+                        this.conclusionText = result.conclusion;
+                        this.updateDisplay();
+                    } else {
+                        throw new Error(result.error || 'Conclusion generation failed');
+                    }
+
+                } catch (error) {
+                    console.error('결론 생성 오류:', error);
+                    alert('결론 생성 중 오류가 발생했습니다: ' + error.message);
+                } finally {
+                    this.showProcessing(false);
+                    this.updateStatus('System Ready', 'connected');
+                    this.conclusionBtn.disabled = false;
+                }
+            }
+
+            updateDisplay() {
+                this.transcriptionOutput.textContent = this.transcriptionText || 
+                    '음성을 녹음하면 자동으로 처리됩니다.\n\n사용법:\n1. 녹음 시작 버튼 클릭\n2. 판독 내용 말하기\n3. 녹음 중지 버튼 클릭\n4. 자동으로 정제된 판독문 표시';
+
+                this.conclusionOutput.textContent = this.conclusionText || 
+                    '결론 생성 버튼을 클릭하면\n전문적인 결론과 감별진단이 생성됩니다.\n\n예상 형식:\nConclusion:\n1. 주요 소견\n -- Primary diagnosis, more likely\n -- Alternative diagnosis, less likely';
+            }
+
+            updateStatus(text, status) {
+                this.statusText.textContent = text;
+                
+                this.connectionStatus.classList.remove('status-connected', 'status-processing', 'status-disconnected');
+                
+                switch(status) {
+                    case 'connected':
+                        this.connectionStatus.classList.add('status-connected');
+                        break;
+                    case 'processing':
+                        this.connectionStatus.classList.add('status-processing');
+                        break;
+                    default:
+                        this.connectionStatus.classList.add('status-disconnected');
+                }
+            }
+
+            showProcessing(show) {
+                if (show) {
+                    this.processingIndicator.classList.add('active');
+                } else {
+                    this.processingIndicator.classList.remove('active');
+                }
+            }
+
+            clearAll() {
+                if (confirm('모든 내용을 삭제하시겠습니까?')) {
+                    this.transcriptionText = '';
+                    this.conclusionText = '';
+                    this.clinicalInfo.value = '';
+                    this.conclusionBtn.disabled = true;
+                    this.updateDisplay();
+                }
+            }
+
+            downloadReport() {
+                const mode = this.getProcessingMode();
+                const model = this.getModelType();
+                const clinicalInfo = this.getClinicalInformation();
+                
+                let processingInfo = '- 1단계: gpt-4o-transcribe 음성인식 및 정제\n';
+                processingInfo += '- 2단계: ' + model.toUpperCase() + ' 전문적 결론 및 감별진단';
+                
+                if (model === 'gpt5') {
+                    processingInfo += ' (reasoning: ' + this.reasoningEffort.value + ', verbosity: ' + this.verbosity.value + ')';
+                } else {
+                    processingInfo += ' (temperature: ' + this.temperature.value + ')';
+                }
+
+                let fullReport = '=== 영상의학 판독보고서 ===\n' +
+                    '생성일시: ' + new Date().toLocaleString() + '\n' +
+                    '처리 모드: ' + mode + '\n\n';
+                
+                if (clinicalInfo) {
+                    fullReport += 'Clinical Information:\n' + clinicalInfo + '\n\n';
+                }
+                
+                fullReport += '판독문:\n' + this.transcriptionText + '\n\n' +
+                    '결론:\n' + this.conclusionText + '\n\n' +
+                    '=== AI 처리 과정 ===\n' + processingInfo;
+                
+                const blob = new Blob([fullReport], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'radiology_report_' + Date.now() + '.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new RadiologyApp();
+        });
+    </script>
+</body>
+</html>
