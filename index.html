@@ -326,7 +326,7 @@ Conclusion:
 
             async checkServer() {
                 try {
-                    const response = await fetch('http://localhost:3000/health');
+                    const response = await fetch('/health');
                     if (response.ok) {
                         this.updateStatus('System Ready', 'connected');
                     } else {
@@ -430,7 +430,7 @@ Conclusion:
                         }
                     }
 
-                    const response = await fetch('http://localhost:3000/transcribe', {
+                    const response = await fetch('/transcribe', {
                         method: 'POST',
                         body: formData
                     });
@@ -494,7 +494,7 @@ Conclusion:
                     const clinicalInfo = this.getClinicalInformation();
                     console.log('Clinical Information:', clinicalInfo || '(없음)');
 
-                    const response = await fetch('http://localhost:3000/generate-conclusion', {
+                    const response = await fetch('/generate-conclusion', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -621,4 +621,5 @@ Conclusion:
         });
     </script>
 </body>
+
 </html>
