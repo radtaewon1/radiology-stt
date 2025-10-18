@@ -181,13 +181,25 @@
 
         <!-- Clinical Information Input -->
         <div class="medical-card rounded-xl shadow-2xl p-6 mb-8">
-            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <i class="fas fa-notes-medical mr-3 text-green-600"></i>
-                Clinical Information
-                <span class="ml-auto text-sm font-normal text-gray-600">
-                    <i class="fas fa-edit mr-1"></i>직접 수정 가능
-                </span>
-            </h2>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-notes-medical mr-3 text-green-600"></i>
+                    Clinical Information
+                    <span class="ml-3 text-sm font-normal text-gray-600">
+                        <i class="fas fa-edit mr-1"></i>직접 수정 가능
+                    </span>
+                </h2>
+                <div class="flex gap-2">
+                    <button id="clearClinicalBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold text-sm flex items-center transition-all duration-200 shadow hover:shadow-lg">
+                        <i class="fas fa-trash mr-2"></i>
+                        전체 삭제
+                    </button>
+                    <button id="resetClinicalBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold text-sm flex items-center transition-all duration-200 shadow hover:shadow-lg">
+                        <i class="fas fa-redo mr-2"></i>
+                        템플릿
+                    </button>
+                </div>
+            </div>
             <textarea 
                 id="clinicalInfo" 
                 class="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:outline-none resize-vertical font-mono text-sm"
@@ -197,7 +209,7 @@
 ___-year-old female/male patient with chief complaint of ___ (duration: ___).
 
 # Additional Context (optional) #
-
+                
 Examination name: ___ 
 Suspected disease/condition: ___ 
 Past medical history: ___ 
@@ -289,6 +301,8 @@ Current treatment or intervention: ___</textarea>
                 this.conclusionBtn = document.getElementById('conclusionBtn');
                 this.clearBtn = document.getElementById('clearBtn');
                 this.downloadBtn = document.getElementById('downloadBtn');
+                this.clearClinicalBtn = document.getElementById('clearClinicalBtn');
+                this.resetClinicalBtn = document.getElementById('resetClinicalBtn');
                 
                 this.statusText = document.getElementById('statusText');
                 this.connectionStatus = document.getElementById('connectionStatus');
@@ -316,6 +330,8 @@ Current treatment or intervention: ___</textarea>
                 this.conclusionBtn.addEventListener('click', () => this.generateConclusion());
                 this.clearBtn.addEventListener('click', () => this.clearAll());
                 this.downloadBtn.addEventListener('click', () => this.downloadReport());
+                this.clearClinicalBtn.addEventListener('click', () => this.clearClinicalInfo());
+                this.resetClinicalBtn.addEventListener('click', () => this.resetClinicalInfo());
                 
                 this.settingsToggle.addEventListener('click', () => this.toggleSettings());
 
@@ -367,6 +383,18 @@ Current treatment or intervention: ___</textarea>
 
             getConclusionText() {
                 return this.conclusionOutput.value.trim();
+            }
+
+            getDefaultClinicalTemplate() {
+                return '# Radiology Clinical Information Template #\n\n[Age]-year-old [female/male] patient with [chief complaint of ___] (duration: ___).\n\nAdditional Context (optional):\nExamination name: ___ \nSuspected disease/condition: ___ \nPast medical history: ___ \nRelevant laboratory findings: ___ \nPrevious imaging findings: ___ \nCurrent treatment or intervention: ___';
+            }
+
+            clearClinicalInfo() {
+                this.clinicalInfo.value = '';
+            }
+
+            resetClinicalInfo() {
+                this.clinicalInfo.value = this.getDefaultClinicalTemplate();
             }
 
             async checkServer() {
@@ -607,7 +635,7 @@ Current treatment or intervention: ___</textarea>
                 if (confirm('모든 내용을 삭제하시겠습니까?')) {
                     this.transcriptionOutput.value = '';
                     this.conclusionOutput.value = '';
-                    this.clinicalInfo.value = '# Radiology Clinical Information Template #\n\n[Age]-year-old [female/male] patient with [chief complaint of ___] (duration: ___).\n\nAdditional Context (optional):\nExamination name: ___ \nSuspected disease/condition: ___ \nPast medical history: ___ \nRelevant laboratory findings: ___ \nPrevious imaging findings: ___ \nCurrent treatment or intervention: ___';
+                    this.clinicalInfo.value = this.getDefaultClinicalTemplate();
                     this.conclusionBtn.disabled = true;
                 }
             }
@@ -660,4 +688,3 @@ Current treatment or intervention: ___</textarea>
     </script>
 </body>
 </html>
-
